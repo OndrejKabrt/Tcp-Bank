@@ -1,5 +1,5 @@
 class Account:
-    def __init__(self, account_number, currency):
+    def __init__(self,account_number, currency):
         if not isinstance(int(account_number), int):
             raise TypeError("account_number must be an integer")
         self.account_number = account_number

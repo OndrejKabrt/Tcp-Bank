@@ -1,10 +1,18 @@
+import json
 import socket
 import threading
 from client_UserInterface import Client
 
 class Server:
     def __init__(self):
-        server_inet_address =("127.0.0.1", 65430)
+
+        with open('ipConfig.json', 'r') as f:
+            config = json.load(f)
+
+        host = config['IP']['host']
+        port = config['IP']['port']
+
+        server_inet_address =(host, port)
 
         server_socket = socket.socket()
         server_socket.bind(server_inet_address)
@@ -30,6 +38,9 @@ class Server:
                 break
             except ConnectionAbortedError:
                 break
+
+
+
 
 if __name__ == "__main__":
     s = Server()

@@ -1,11 +1,29 @@
 from DatabaseSingleton import *
 from Account import Account
 
-class MovieDAO:
+class AccountDAO:
 
-    def save(selfself,a):
+    def save(self,a):
         sql = "INSERT  INTO account (account_number, currency) values (%s, %s);"
         val = [a.account_number, a.currency]
+        conn = DatabaseSingleton()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("START TRANSACTION;")
+            cursor.execute(sql, val)
+        except Exception as e:
+            print("7")
+            print(e)
+            cursor.execute("ROLLBACK;")
+        else:
+            cursor.execute("COMMIT;")
+        finally:
+            conn.close()
+
+
+    def update_positive(self, a):
+        sql = "UPDATE account SET currency = currency + %s WHERE account_number = %s;"
+        val = [a.currency, a.account_number]
         conn = DatabaseSingleton()
         cursor = conn.cursor()
         try:
@@ -19,9 +37,8 @@ class MovieDAO:
         finally:
             conn.close()
 
-
-    def update(self, a): # Update na zvyšování a snižování částkym, každý jiný
-        sql = "UPDATE account SET currency = %s WHERE account_number = %s;"
+    def update_negative(self, a):
+        sql = "UPDATE account SET currency = currency - %s WHERE account_number = %s;"
         val = [a.currency, a.account_number]
         conn = DatabaseSingleton()
         cursor = conn.cursor()

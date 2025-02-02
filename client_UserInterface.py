@@ -1,9 +1,13 @@
+import json
+
+from Application import Applications
 
 
 class Client:
     def __init__(self, connection, server):
         self.connection = connection
         self.server = server
+        self.application = Applications(self, )
 
     def run(self):
         while self.connection and self.server.server_socket:
@@ -21,42 +25,61 @@ class Client:
 
     def menu_input(self):
         commands = [
-            ("BC", self.bank_code())
+            ("BC", self.bank_code),
+            ("AC", self.application.account_create),
+            ("AD", self.application.account_deposit),
+            ("AW", self.application.account_withdraw),
+            ("AB", self.application.account_balance),
+            ("AR", self.application.account_remove),
+            ("BA", self.application.bank_amount),
+            ("BN", self.application.number_of_clients)
         ]
-        self.print_line()
-        self.send_message("Choose a command:")
-
-        number = 0
-        for label, command in commands:
-            number += 1
-            self.send_message(f"{number}: {label}")
 
         command = None
+        number = 0
         try:
+
             while command is None:
-                self.send_message(f"Write command you want to execute: ", False)
-                command = input() #Todo Parser
+                command = self.get_input()
                 try:
                     splited_command = command.split(" ", 1)
+                    in_list_number = 0
 
-                except:
-                    self.send_message("Invalid command")
-                    command = None
+                    for i in commands:
+                        if i[0] == splited_command[0]:
+                            number = in_list_number
+                        else:
+                            in_list_number += 1
+
+                    if not (len(command) == 2):
+                        return commands[number][1](splited_command[1])
+                    else:
+                        return commands[number][1]()
+                except Exception as e:
+                    print(e)
+
         except OSError:
             pass
         except ConnectionAbortedError:
             pass
-        else:
-            return command[command - 1][1]()
+
 
     def terminate_client(self):
         self.connection.close()
         self.connection = None
 
-    def get_help(self):
-        help = []
-
-        for label, desc in help:
-            self.send_message(f"{label}: {desc}")
     def bank_code(self):
-        return self.send_message("BC " + self.connection)
+        with open('ipConfig.json', 'r') as f:
+            config = json.load(f)
+        return self.send_message("BC " + config['IP']['host'])
+
+    def get_input(self):
+        buffer = b""
+
+        while True:
+            chunk = self.connection.recv(256)
+            buffer += chunk
+
+            if buffer.endswith(b"\r\n"):
+                message = buffer.decode("utf-8")
+                return message.strip()
