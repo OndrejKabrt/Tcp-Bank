@@ -2,6 +2,7 @@ import json
 import socket
 import threading
 from client_UserInterface import Client
+import multiprocessing.process
 
 class Server:
     def __init__(self):
@@ -16,6 +17,7 @@ class Server:
 
         server_socket = socket.socket()
         server_socket.bind(server_inet_address)
+        server_socket.settimeout(5)
         server_socket.listen()
 
         self.server_socket = server_socket
@@ -32,7 +34,8 @@ class Server:
         while self.isrunning:
             try:
                 connection, client_address = self.server_socket.accept()
-                thread = threading.Thread(target=self.create_new_client, args=(connection, self,))
+                thread = multiprocessing.Process(target=self.create_new_client, args=(connection, self,))
+                print(f"Client connected on {client_address[0]}")
                 thread.start()
             except OSError:
                 break
