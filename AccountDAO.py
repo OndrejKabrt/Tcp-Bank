@@ -12,7 +12,6 @@ class AccountDAO:
             cursor.execute("START TRANSACTION;")
             cursor.execute(sql, val)
         except Exception as e:
-            print("7")
             print(e)
             cursor.execute("ROLLBACK;")
         else:

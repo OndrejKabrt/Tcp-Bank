@@ -1,0 +1,9 @@
+{
+  "database":{
+    "host": "63.176.51.105",
+    "port":3306,
+    "user": "kabrt1app",
+    "password": "Ondra6523+",
+    "database": "Bank"
+  }
+}

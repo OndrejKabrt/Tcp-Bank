@@ -1,5 +1,6 @@
 import random
 import re
+import socket
 
 from Account import Account
 from AccountDAO import AccountDAO
@@ -7,13 +8,15 @@ from AccountDAO import AccountDAO
 
 class Applications():
 
-    def __init__(self, client):
+    def __init__(self, client, client_address):
         self.client = client
+        self.client_address = client_address
         self.account_Dao = AccountDAO()
         self.ip = str(self.client.connection).split("laddr=('")[1].split("',")[0]
 
 
-    ##Todo Metoda na přesměrování příkazu na jinou ip addresu
+    def bank_code(self):
+        return self.client.send_message("BC " + self.client_address[0])
 
     def account_create(self, accountdata = None):
         try:
@@ -43,9 +46,11 @@ class Applications():
                                 increse = Account(account.account_number, currency)
                                 self.account_Dao.update_positive(increse)
                                 return self.client.send_message(f"AD")
-                #else:
-                    #Ta metoda na presmerovani
-                    #pass
+                else:
+                    input = f"AD {accountdata}"
+                    dif_srv_ans = self.command_redirection(input)
+                    return dif_srv_ans
+                    pass
         except Exception as e:
             print(e)
         else:
@@ -78,25 +83,38 @@ class Applications():
 
                 except:
                     self.client.send_message(f"ER číslo bankovního účtu a částka není ve správném formátu.")
-            #else:
-                #Ta metoda na presmerovani
-                #pass
+            else:
+                input = f"AW {accountdata}"
+                dif_srv_ans = self.command_redirection(input)
+                return dif_srv_ans
+                pass
         else:
             self.client.send_message(f"ER číslo bankovního účtu a částka není ve správném formátu.")
 
 
     def account_balance(self, accountdata):
+        print("1")
         account_number, ip_address = accountdata.split('/')
         if (int(account_number) >= 10000 and int(account_number) <= 99999) :
+            print("2")
             if re.fullmatch(str(self.ip), str(ip_address)):
+                print("3")
                 all_accounts = self.account_Dao.select_all()
                 for account in all_accounts:
                     if re.fullmatch(str(account_number),str(account.account_number)):
+                        print("4")
                         balance = self.account_Dao.select_balance(account_number)
-                        return self.client.send_message(f"AB {balance}")
-            #else:
-            #Ta metoda na presmerovani
-            #pass
+                        currency = balance[0][0]
+                        return self.client.send_message(f"AB {currency}")
+            else:
+                try:
+                    print("5")
+                    input = f"AB {accountdata}"
+                    dif_srv_ans = self.command_redirection(input)
+                    return self.client.send_message(f"{dif_srv_ans}")
+                    pass
+                except Exception as e:
+                    print(e)
         else:
             self.client.send_message(f"ER Formát čísla účtu není správný.")
 
@@ -115,9 +133,6 @@ class Applications():
                             return self.client.send_message(f"AR")
                     if found == 0:
                         self.client.send_message(f"ER číslo bankovního účtu a částka není ve správném formátu.")
-                #else:
-                    #Ta metoda na presmerovani
-                    #pass
             else:
                 self.client.send_message(f"ER číslo bankovního účtu a částka není ve správném formátu.")
         except Exception as e:
@@ -145,3 +160,55 @@ class Applications():
             return self.client.send_message(f"BN {sum_of_clients}")
         except Exception as e:
             self.client.send_message(f"ER aktuálně nebylo možné vypsat celou finanční sumu.")
+
+    def command_redirection(self, redirected_command):
+        functional_port = None
+        try:
+            print("1")
+            split_data = redirected_command.split(' ')
+            print("2")
+            account_number, ip_address = split_data[1].split('/')
+            print("3")
+            for port in range(65525,65536):
+                try:
+                    print(port)
+                    server_inet_address = (ip_address, port)
+                    print("4")
+                    bank_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    print("5")
+                    bank_socket.settimeout(0.2)
+                    print("6")
+                    bank_socket.connect(server_inet_address)
+                    print("7")
+                    functional_port = port
+                    print("8")
+                    bank_socket.close()
+                    break
+                except socket.error:
+                    pass
+            else:
+                sorry = (f"Tento bankovní kod nebyl nalezen")
+                return sorry
+        except Exception:
+            return None
+        else:
+            try:
+                print("9")
+                server_inet_address = (ip_address, functional_port)
+                print("10")
+                bank_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                print("11")
+                bank_socket.connect(server_inet_address)
+                print("12")
+                command = f"{redirected_command}\r\n"
+                print(str(command))
+                print("13")
+                bank_socket.sendall(command.encode("utf-8"))
+                print("14")
+                response = bank_socket.recv(4096).decode("utf-8").strip()
+                print("15")
+                bank_socket.close()
+                print("16")
+                return response
+            except Exception as e:
+                print(e)

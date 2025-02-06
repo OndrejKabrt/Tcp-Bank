@@ -25,3 +25,5 @@ Komandů tu máme kned několik.
 
 
 pip install mysql-connector-python
+
+AB AD AW
