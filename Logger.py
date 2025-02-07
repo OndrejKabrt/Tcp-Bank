@@ -19,6 +19,9 @@ def log_input(command, from_ip):
 def log_output(message, to_ip):
     logging.info(f"User from '{to_ip}' recieved '{message}'")
 
-def log_user(from_ip):
+def log_user_connected(from_ip):
     logging.info(f"User from '{from_ip}' have now connected")
+
+def log_user_disconnected(from_ip):
+    logging.info(f"User from '{from_ip}' have now disconnected")
 

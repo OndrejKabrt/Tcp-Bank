@@ -1,8 +1,9 @@
 {
   "IP":{
-    "host": "192.168.69.238",
+    "host": "10.147.18.60",
     "port":65525,
-    "timeout" : 10,
-    "logger_file": "./Logs.txt"
+    "server_timeout" : 10,
+    "logger_file": "./Logs.txt",
+    "client_timeout": 15
   }
 }

@@ -6,7 +6,7 @@ from Account import Account
 from AccountDAO import AccountDAO
 
 
-class Applications():
+class Applications:
 
     def __init__(self, client, client_address):
         self.client = client
@@ -20,13 +20,13 @@ class Applications():
 
     def account_create(self, accountdata = None):
         try:
-            if(accountdata):
+            if accountdata:
                 raise Exception
             all_accounts = self.account_Dao.select_all()
             if not all_accounts:
                 all_accounts = []
             new_account = random.choice([i for i in range(10000, 99999) if i not in all_accounts])
-        except Exception as e:
+        except Exception:
             self.client.send_message("ER Naše banka nyní neumožňuje založení nového účtu.")
         else:
             account = Account(int(new_account), 0)
@@ -93,22 +93,17 @@ class Applications():
 
 
     def account_balance(self, accountdata):
-        print("1")
         account_number, ip_address = accountdata.split('/')
         if (int(account_number) >= 10000 and int(account_number) <= 99999) :
-            print("2")
             if re.fullmatch(str(self.ip), str(ip_address)):
-                print("3")
                 all_accounts = self.account_Dao.select_all()
                 for account in all_accounts:
                     if re.fullmatch(str(account_number),str(account.account_number)):
-                        print("4")
                         balance = self.account_Dao.select_balance(account_number)
                         currency = balance[0][0]
                         return self.client.send_message(f"AB {currency}")
             else:
                 try:
-                    print("5")
                     input = f"AB {accountdata}"
                     dif_srv_ans = self.command_redirection(input)
                     return self.client.send_message(f"{dif_srv_ans}")
@@ -146,7 +141,7 @@ class Applications():
             for account in all_accounts:
                 suma += account.currency
             return self.client.send_message(f"BA {suma}")
-        except Exception as e:
+        except Exception:
             self.client.send_message(f"ER aktuálně nebylo možné vypsat celou finanční sumu.")
 
 
@@ -158,57 +153,39 @@ class Applications():
             for account in all_accounts:
                 sum_of_clients += 1
             return self.client.send_message(f"BN {sum_of_clients}")
-        except Exception as e:
+        except Exception:
             self.client.send_message(f"ER aktuálně nebylo možné vypsat celou finanční sumu.")
 
     def command_redirection(self, redirected_command):
         functional_port = None
         try:
-            print("1")
             split_data = redirected_command.split(' ')
-            print("2")
             account_number, ip_address = split_data[1].split('/')
-            print("3")
             for port in range(65525,65536):
                 try:
-                    print(port)
                     server_inet_address = (ip_address, port)
-                    print("4")
                     bank_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    print("5")
                     bank_socket.settimeout(0.2)
-                    print("6")
                     bank_socket.connect(server_inet_address)
-                    print("7")
                     functional_port = port
-                    print("8")
                     bank_socket.close()
                     break
                 except socket.error:
                     pass
             else:
-                sorry = (f"Tento bankovní kod nebyl nalezen")
+                sorry = f"Tento bankovní kod nebyl nalezen"
                 return sorry
         except Exception:
             return None
         else:
             try:
-                print("9")
                 server_inet_address = (ip_address, functional_port)
-                print("10")
                 bank_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                print("11")
                 bank_socket.connect(server_inet_address)
-                print("12")
                 command = f"{redirected_command}\r\n"
-                print(str(command))
-                print("13")
                 bank_socket.sendall(command.encode("utf-8"))
-                print("14")
                 response = bank_socket.recv(4096).decode("utf-8").strip()
-                print("15")
                 bank_socket.close()
-                print("16")
                 return response
             except Exception as e:
                 print(e)
